@@ -1,0 +1,54 @@
+﻿name: Build WinUI3 App
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  CONFIGURATION: 'Release'
+
+jobs:
+  build:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        platform: [x64, x86, ARM64]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore VocabApp\VocabApp.csproj
+      shell: cmd
+
+    - name: Build
+      run: |
+        msbuild VocabApp\VocabApp.csproj /p:Configuration=${{ env.CONFIGURATION }} /p:Platform=${{ matrix.platform }} /p:AppxPackage=true /p:AppxBundle=Never /p:UapAppxPackageBuildMode=CI /p:AppxPackageSigningEnabled=false
+      shell: cmd
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: VocabApp-${{ matrix.platform }}
+        path: |
+          VocabApp\AppPackages\*\*
+          VocabApp\bin\${{ matrix.platform }}\${{ env.CONFIGURATION }}\**\*.msix
+          VocabApp\bin\${{ matrix.platform }}\${{ env.CONFIGURATION }}\*.exe
+        if-no-files-found: warn
+        retention-days: 7

@@ -1,0 +1,431 @@
+﻿<Window x:Class="VocabApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VocabApp"
+        MinWidth="500" MinHeight="600"
+        Width="820" Height="800">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 顶部导航 -->
+        <Border Grid.Row="0" Padding="16,12" Background="{ThemeResource CardBackgroundFillColorDefault}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="VocabApp" FontSize="20" FontWeight="Bold"
+                           VerticalAlignment="Center">
+                    <TextBlock.Foreground>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Offset="0" Color="#6366F1" />
+                            <GradientStop Offset="1" Color="#A855F7" />
+                        </LinearGradientBrush>
+                    </TextBlock.Foreground>
+                </TextBlock>
+
+                <NavigationView Grid.Column="1" x:Name="NavView"
+                                PaneDisplayMode="Top"
+                                IsSettingsVisible="False"
+                                Margin="0,0,0,-4"
+                                SelectionChanged="NavView_SelectionChanged">
+                    <NavigationView.MenuItems>
+                        <NavigationViewItem x:Name="NavBanks" Icon="Library" Content="词库" Tag="banks" />
+                        <NavigationViewItem x:Name="NavLearn" Icon="Glyph" Content="学习" Tag="learn">
+                            <NavigationViewItem.Icon>
+                                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE1C6;" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                        <NavigationViewItem x:Name="NavStats" Icon="Poll" Content="统计" Tag="stats" />
+                    </NavigationView.MenuItems>
+                </NavigationView>
+            </Grid>
+        </Border>
+
+        <!-- 状态消息 -->
+        <Border Grid.Row="1" x:Name="StatusBorder" Visibility="Collapsed"
+                Background="#EEF2FF" Padding="12,8" CornerRadius="0">
+            <TextBlock x:Name="StatusText" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                       Foreground="#6366F1" FontSize="13" />
+        </Border>
+
+        <!-- 页面内容 -->
+        <Grid Grid.Row="2" Margin="16,8,16,16">
+            <!-- 词库页 -->
+            <ScrollViewer x:Name="BanksPage" Visibility="Visible">
+                <StackPanel Spacing="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="词库" FontSize="18" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                        <Button Grid.Column="1" x:Name="BtnImport" Content="导入 TXT" Style="{StaticResource PrimaryButton}"
+                                Click="BtnImport_Click" />
+                    </Grid>
+
+                    <!-- 导入区 -->
+                    <Border x:Name="DropZone" Padding="40,32"
+                            BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                            BorderThickness="2" CornerRadius="12"
+                            AllowDrop="True"
+                            DragOver="DropZone_DragOver" DragLeave="DropZone_DragLeave" Drop="DropZone_Drop">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                            <TextBlock Text="📖" FontSize="40" HorizontalAlignment="Center" />
+                            <TextBlock Text="拖拽 TXT 文件到此处，或点击上方按钮导入"
+                                       Foreground="{StaticResource TextSecondaryColor}"
+                                       HorizontalAlignment="Center" FontSize="14" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 词库列表 -->
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Banks, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,4" Padding="16"
+                                        CornerRadius="12"
+                                        Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                        BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Count, StringFormat='{0} 个单词'}"
+                                                       Foreground="{StaticResource TextMutedColor}" FontSize="13" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                            <Button Content="学习" Style="{StaticResource PrimaryButton}"
+                                                    Tag="{Binding Name}"
+                                                    Click="BtnStudyBank_Click" />
+                                            <Button Content="删除" Style="{StaticResource DangerButton}"
+                                                    Tag="{Binding Name}"
+                                                    Click="BtnDeleteBank_Click" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 学习页 -->
+            <ScrollViewer x:Name="LearnPage" Visibility="Collapsed">
+                <StackPanel Spacing="12">
+                    <!-- 学习设置 -->
+                    <Border x:Name="LearnSetupPanel" Padding="24"
+                            CornerRadius="12"
+                            Background="{ThemeResource CardBackgroundFillColorDefault}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                            BorderThickness="1">
+                        <StackPanel Spacing="12" HorizontalAlignment="Center">
+                            <TextBlock Text="学习设置" FontSize="18" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" />
+
+                            <ComboBox x:Name="BankComboBox" Header="选择词库" MinWidth="280"
+                                      PlaceholderText="请选择词库"
+                                      SelectionChanged="BankComboBox_SelectionChanged" />
+
+                            <TextBlock Text="学习模式" FontSize="14" FontWeight="SemiBold" />
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
+                                <RadioButton x:Name="ModeFlashcard" Content="闪卡" GroupName="StudyMode"
+                                             IsChecked="True" Checked="ModeFlashcard_Checked" />
+                                <RadioButton x:Name="ModeQuiz" Content="答题" GroupName="StudyMode"
+                                             Checked="ModeQuiz_Checked" />
+                            </StackPanel>
+
+                            <TextBlock Text="顺序" FontSize="14" FontWeight="SemiBold" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
+                                <RadioButton x:Name="OrderSequential" Content="顺序" GroupName="StudyOrder" />
+                                <RadioButton x:Name="OrderShuffled" Content="随机" GroupName="StudyOrder"
+                                             IsChecked="True" />
+                            </StackPanel>
+
+                            <Button x:Name="BtnStartLearn" Content="开始学习" Style="{StaticResource PrimaryButton}"
+                                    Width="200" HorizontalAlignment="Center" Click="BtnStartLearn_Click" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 学习会话 -->
+                    <Border x:Name="LearnSessionPanel" Visibility="Collapsed" Padding="20"
+                            CornerRadius="12"
+                            Background="{ThemeResource CardBackgroundFillColorDefault}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                            BorderThickness="1">
+                        <StackPanel Spacing="12">
+                            <!-- 头部 -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{x:Bind ViewModel.TimerText, Mode=OneWay}"
+                                               FontFamily="Consolas" FontSize="16" />
+                                    <TextBlock Text="{x:Bind ViewModel.CurrentIndex, Mode=OneWay}"
+                                               FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    <TextBlock Text="/" Foreground="{StaticResource TextMutedColor}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{x:Bind ViewModel.TotalCards, Mode=OneWay}"
+                                               Foreground="{StaticResource TextMutedColor}" VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <Button Grid.Column="1" Content="⏸" FontSize="16"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Width="40" Height="36" Padding="0"
+                                        Click="BtnPause_Click" />
+                                <Button Grid.Column="2" Content="退出" Style="{StaticResource SecondaryButton}"
+                                        Click="BtnQuit_Click" Margin="8,0,0,0" />
+                            </Grid>
+
+                            <!-- 进度条 -->
+                            <ProgressBar x:Name="ProgressBar" Value="{x:Bind ViewModel.Progress, Mode=OneWay}"
+                                         Maximum="1" Height="4" CornerRadius="2"
+                                         Foreground="{StaticResource PrimaryColor}" />
+
+                            <!-- 闪卡模式 -->
+                            <Border x:Name="FlashcardPanel" Visibility="Visible" Padding="32,40,32,24"
+                                    CornerRadius="16" MinHeight="220"
+                                    Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                    BorderThickness="1">
+                                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                    <TextBlock x:Name="FlashcardWord"
+                                               Text="{x:Bind ViewModel.CurrentWord, Mode=OneWay}"
+                                               FontSize="32" FontWeight="Bold"
+                                               HorizontalAlignment="Center" TextAlignment="Center" />
+
+                                    <Border x:Name="DefinitionPanel" Visibility="Collapsed"
+                                            Padding="16" CornerRadius="8"
+                                            Background="{ThemeResource CardBackgroundFillColorSecondary}">
+                                        <TextBlock x:Name="FlashcardDefinition"
+                                                   Text="{x:Bind ViewModel.CurrentDefinition, Mode=OneWay}"
+                                                   FontSize="18"
+                                                   Foreground="{StaticResource TextSecondaryColor}"
+                                                   HorizontalAlignment="Center" TextWrapping="WrapWholeWords" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 闪卡操作 -->
+                            <StackPanel x:Name="FlashcardActions" Orientation="Horizontal"
+                                        HorizontalAlignment="Center" Spacing="16">
+                                <Button x:Name="BtnFlip" Content="翻卡 (空格/回车)"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Click="BtnFlip_Click" />
+                                <StackPanel x:Name="FlashcardAnswerButtons" Orientation="Horizontal"
+                                            Spacing="12" Visibility="Collapsed">
+                                    <Button x:Name="BtnForgot" Content="忘记 (1/F)"
+                                            Style="{StaticResource DangerButton}"
+                                            Width="120" Click="BtnForgot_Click" />
+                                    <Button x:Name="BtnRemember" Content="记住 (2/J)"
+                                            Style="{StaticResource SuccessButton}"
+                                            Width="120" Click="BtnRemember_Click" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- 答题模式 -->
+                            <StackPanel x:Name="QuizPanel" Visibility="Collapsed" Spacing="12">
+                                <Border Padding="32,40,32,24" CornerRadius="16" MinHeight="220"
+                                        Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                        BorderThickness="1">
+                                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                                        <TextBlock x:Name="QuizQuestion"
+                                                   Text="{x:Bind ViewModel.Question, Mode=OneWay}"
+                                                   FontSize="24" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" TextWrapping="WrapWholeWords" />
+                                        <ItemsControl ItemsSource="{x:Bind ViewModel.QuizOptions, Mode=OneWay}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="10"
+                                                                HorizontalAlignment="Center" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="{Binding Text}"
+                                                            CornerRadius="10" MinWidth="140" MinHeight="44"
+                                                            Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                                            BorderThickness="2"
+                                                            IsEnabled="{Binding IsDisabled, Converter={StaticResource BoolInvertConverter}, Mode=OneWay}"
+                                                            Click="QuizOption_Click"
+                                                            Tag="{Binding}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                                <Button x:Name="BtnNextQuiz" Content="下一题 (空格/回车)"
+                                        Style="{StaticResource PrimaryButton}"
+                                        HorizontalAlignment="Center" Width="200"
+                                        Visibility="Collapsed" Click="BtnNextQuiz_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 结果页 -->
+                    <Border x:Name="ResultPanel" Visibility="Collapsed" Padding="32"
+                            CornerRadius="12"
+                            Background="{ThemeResource CardBackgroundFillColorDefault}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                            BorderThickness="1">
+                        <StackPanel Spacing="16" HorizontalAlignment="Center">
+                            <TextBlock Text="✅ 学习完成！" FontSize="24" FontWeight="Bold"
+                                       HorizontalAlignment="Center" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                    <TextBlock Text="{x:Bind ViewModel.ResultTotal, Mode=OneWay}"
+                                               FontSize="28" FontWeight="Bold"
+                                               Foreground="{StaticResource PrimaryColor}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="总题数" Foreground="{StaticResource TextSecondaryColor}"
+                                               FontSize="13" HorizontalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                    <TextBlock Text="{x:Bind ViewModel.ResultRemembered, Mode=OneWay}"
+                                               FontSize="28" FontWeight="Bold"
+                                               Foreground="{StaticResource SuccessColor}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="正确" Foreground="{StaticResource TextSecondaryColor}"
+                                               FontSize="13" HorizontalAlignment="Center" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                    <TextBlock Text="{x:Bind ViewModel.ResultAccuracy, Mode=OneWay}"
+                                               FontSize="28" FontWeight="Bold"
+                                               Foreground="{StaticResource PrimaryColor}"
+                                               HorizontalAlignment="Center" />
+                                    <TextBlock Text="正确率" Foreground="{StaticResource TextSecondaryColor}"
+                                               FontSize="13" HorizontalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12">
+                                <Button Content="再来一次" Style="{StaticResource PrimaryButton}"
+                                        Width="140" Click="BtnAgain_Click" />
+                                <Button Content="返回" Style="{StaticResource SecondaryButton}"
+                                        Width="140" Click="BtnBackToSetup_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- 统计页 -->
+            <ScrollViewer x:Name="StatsPage" Visibility="Collapsed">
+                <StackPanel Spacing="12">
+                    <!-- 概览卡片 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Margin="0,0,4,0" Padding="16" CornerRadius="12"
+                                Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Bind ViewModel.StatSessions, Mode=OneWay}"
+                                           FontSize="24" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryColor}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="学习次数" Foreground="{StaticResource TextSecondaryColor}"
+                                           FontSize="13" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Margin="4,0" Padding="16" CornerRadius="12"
+                                Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Bind ViewModel.StatAvgAccuracy, Mode=OneWay}"
+                                           FontSize="24" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryColor}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="平均正确率" Foreground="{StaticResource TextSecondaryColor}"
+                                           FontSize="13" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Margin="4,0,0,0" Padding="16" CornerRadius="12"
+                                Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                BorderThickness="1">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="{x:Bind ViewModel.StatTotalMinutes, Mode=OneWay}"
+                                           FontSize="24" FontWeight="Bold"
+                                           Foreground="{StaticResource PrimaryColor}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="总学习时长(分)" Foreground="{StaticResource TextSecondaryColor}"
+                                           FontSize="13" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- 历史记录 -->
+                    <TextBlock Text="学习记录" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0" />
+
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.History, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,4" Padding="16" CornerRadius="10"
+                                        Background="{ThemeResource CardBackgroundFillColorDefault}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                        BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding BankName}" FontWeight="SemiBold" />
+                                                <Border Padding="4,2,4,2" CornerRadius="8"
+                                                        Background="#EEF2FF">
+                                                    <TextBlock Text="{Binding Mode}" FontSize="11"
+                                                               Foreground="#6366F1" />
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Total, StringFormat='{0} 题'}"
+                                                       Foreground="{StaticResource TextMutedColor}" FontSize="13" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                            <TextBlock Text="{Binding Accuracy, StringFormat='{0}%'}"
+                                                       FontWeight="Bold"
+                                                       Foreground="{StaticResource SuccessColor}" />
+                                            <TextBlock Text="{Binding Date, StringFormat='{0:MM/dd HH:mm}'}"
+                                                       Foreground="{StaticResource TextMutedColor}" FontSize="12" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>
+

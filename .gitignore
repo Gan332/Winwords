@@ -1,0 +1,10 @@
+﻿*.msix
+*.appx
+*.bin
+*.pdb
+*.user
+.vs/
+bin/
+obj/
+AppPackages/
+Bundles/
