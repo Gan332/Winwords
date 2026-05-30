@@ -26,23 +26,24 @@ jobs:
       with:
         dotnet-version: |
           8.0.x
-          9.0.x
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
+    - name: Restore
+      run: dotnet restore VocabApp\VocabApp.csproj -p:Platform=${{ matrix.platform }}
+
     - name: Build
-      run: |
-        msbuild VocabApp\VocabApp.csproj /p:Configuration=${{ env.CONFIGURATION }} /p:Platform=${{ matrix.platform }} /p:TargetFramework=net8.0-windows10.0.19041.0 /t:Restore,Build
+      run: dotnet build VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -p:Platform=${{ matrix.platform }} --no-restore
 
     - name: Publish
       run: |
-        msbuild VocabApp\VocabApp.csproj /p:Configuration=${{ env.CONFIGURATION }} /p:Platform=${{ matrix.platform }} /p:TargetFramework=net8.0-windows10.0.19041.0 /p:WindowsPackageType=None /t:Publish /p:PublishDir=..\publish\${{ matrix.platform }}
+        dotnet publish VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -p:Platform=${{ matrix.platform }} -p:WindowsPackageType=None -o publish\VocabApp-${{ matrix.platform }} --no-restore
 
-    - name: Upload Build Artifacts
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: VocabApp-${{ matrix.platform }}
-        path: publish\${{ matrix.platform }}\**\*
+        path: publish\VocabApp-${{ matrix.platform }}\**\*
         if-no-files-found: warn
         retention-days: 7
