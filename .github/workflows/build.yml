@@ -21,22 +21,28 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          9.0.x
+
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    - name: Restore and Build
+    - name: Build
       run: |
-        dotnet restore VocabApp\VocabApp.csproj -p:Platform=${{ matrix.platform }}
-        dotnet build VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -p:Platform=${{ matrix.platform }} --no-restore
+        msbuild VocabApp\VocabApp.csproj /p:Configuration=${{ env.CONFIGURATION }} /p:Platform=${{ matrix.platform }} /p:TargetFramework=net8.0-windows10.0.19041.0 /t:Restore,Build
 
     - name: Publish
       run: |
-        dotnet publish VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -p:Platform=${{ matrix.platform }} -p:WindowsPackageType=None -o publish\VocabApp-${{ matrix.platform }}
+        msbuild VocabApp\VocabApp.csproj /p:Configuration=${{ env.CONFIGURATION }} /p:Platform=${{ matrix.platform }} /p:TargetFramework=net8.0-windows10.0.19041.0 /p:WindowsPackageType=None /t:Publish /p:PublishDir=..\publish\${{ matrix.platform }}
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: VocabApp-${{ matrix.platform }}
-        path: publish\VocabApp-${{ matrix.platform }}\**\*
+        path: publish\${{ matrix.platform }}\**\*
         if-no-files-found: warn
         retention-days: 7
