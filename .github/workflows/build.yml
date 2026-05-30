@@ -15,30 +15,23 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        platform: [x64, x86, ARM64]
+        platform: [x64]
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.0.x'
-
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    - name: Restore NuGet packages
-      run: dotnet restore VocabApp\VocabApp.csproj -r win-${{ matrix.platform }}
-
-    - name: Build
+    - name: Restore and Build
       run: |
-        dotnet build VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -r win-${{ matrix.platform }} --no-restore
+        dotnet restore VocabApp\VocabApp.csproj -p:Platform=${{ matrix.platform }}
+        dotnet build VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -p:Platform=${{ matrix.platform }} --no-restore
 
-    - name: Publish (non-MSIX)
+    - name: Publish
       run: |
-        dotnet publish VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -r win-${{ matrix.platform }} --no-restore -p:WindowsPackageType=None -o publish\VocabApp-${{ matrix.platform }}
+        dotnet publish VocabApp\VocabApp.csproj -c ${{ env.CONFIGURATION }} -p:Platform=${{ matrix.platform }} -p:WindowsPackageType=None -o publish\VocabApp-${{ matrix.platform }}
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
